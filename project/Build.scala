@@ -6,21 +6,17 @@ import com.typesafe.sbt.SbtSite.site
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.plugin.MimaKeys.{previousArtifact, binaryIssueFilters}
 import com.typesafe.tools.mima.core.{ProblemFilters, MissingClassProblem}
-import com.typesafe.sbt.osgi.SbtOsgi._
 
 object SlickBuild extends Build {
 
   /* Custom Settings */
   val repoKind = SettingKey[String]("repo-kind", "Maven repository kind (\"snapshots\" or \"releases\")")
 
-  lazy val sharedSettings = osgiSettings ++ Seq(
+  lazy val sharedSettings = Seq(
     organizationName := "Typesafe",
     organization := "com.typesafe.slick",
     resolvers += Resolver.sonatypeRepo("snapshots"),
     scalacOptions ++= List("-deprecation", "-feature"),
-    OsgiKeys.importPackage := Seq("""scala.*;version="$<range;[==,=+);@>""""),
-    OsgiKeys.importPackage ++= Seq("scala.slick.*;version=\"[${Bundle-Version}, ${Bundle-Version}]\"", "*"),
-    OsgiKeys.additionalHeaders := Map("-removeheaders" -> "Include-Resource,Private-Package"),
     libraryDependencies += "org.slf4j" % "slf4j-api" % "1.6.4",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ % "optional"),
     logBuffered := false,
@@ -60,8 +56,6 @@ object SlickBuild extends Build {
     unmanagedClasspath in Compile += Attributed.blank(new java.io.File("doesnotexist"))
   )
 
-  def osgiExportAll(packs: String*) = OsgiKeys.exportPackage := packs.map(_ + ".*;version=${Bundle-Version}")
-
   /* Project Definitions */
   lazy val aRootProject = Project(id = "root", base = file("."),
     settings = Project.defaultSettings ++ sharedSettings ++ Seq(
@@ -79,7 +73,6 @@ object SlickBuild extends Build {
       test := (),
       testOnly <<= inputTask { argTask => (argTask) map { args => }},
       previousArtifact := Some("com.typesafe.slick" % "slick_2.10" % "1.0.0"),
-      osgiExportAll("scala.slick"),
       binaryIssueFilters ++= Seq(
         ProblemFilters.exclude[MissingClassProblem]("scala.slick.util.MacroSupportInterpolationImpl$"),
         ProblemFilters.exclude[MissingClassProblem]("scala.slick.util.MacroSupportInterpolationImpl")
